@@ -1,0 +1,6 @@
+[package]
+name = "sodium-rust-more-primitives"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
