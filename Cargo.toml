@@ -4,3 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+sodium-rust = { git = "https://github.com/suzuki-taro-29/sodium-rust", version = "2.1.2" }
