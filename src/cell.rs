@@ -18,7 +18,7 @@ where
     fn accum_filter<S, FCond, FAccum>(&self, init_state: S, cond: FCond, accum: FAccum) -> Cell<S>
     where
         S: Clone + Send + 'static,
-        FCond: FnMut(&A, &S) -> bool + Send + Sync + 'static,
+        FCond: FnMut(&S) -> bool + Send + Sync + 'static,
         FAccum: FnMut(&A, &S) -> S + Send + Sync + 'static;
 }
 
@@ -52,6 +52,21 @@ where
         })
     }
 
+    /// Accumulate on an input event, outputting the new state when cond function returns true.
+    ///
+    /// As each event is received, the accumulating function `accum` is called with the current state and the new event value.
+    /// Next, the condition function `cond` is called with the result of accum function.
+    /// If the cond function returns true, the state is updated with the result of the accum function, else the state is updated with the previous state.
+    /// The accumulating function may construct FRP logic or [`Cell::sample`], in which case it's equivalent to [`snapshot`][Stream::snapshot]ing the cell. In additon, the function must be referentially transparent.
+    ///
+    /// ```
+    /// let s: Stream<usize> = sodium_ctx.new_stream_sink().stream();
+    /// s.accum_filter(
+    ///   0,
+    ///   |next_state| next_state < 100,
+    ///   |event, prev_state| event + prev_state,
+    /// )
+    /// ```
     fn accum_filter<S, FCond, FAccum>(
         &self,
         init_state: S,
@@ -60,12 +75,12 @@ where
     ) -> Cell<S>
     where
         S: Clone + Send + 'static,
-        FCond: FnMut(&A, &S) -> bool + Send + Sync + 'static,
+        FCond: FnMut(&S) -> bool + Send + Sync + 'static,
         FAccum: FnMut(&A, &S) -> S + Send + Sync + 'static,
     {
         self.accum(init_state, move |a, prev| {
             let next = accum(a, prev);
-            if cond(a, &next) {
+            if cond(&next) {
                 next
             } else {
                 prev.clone()
