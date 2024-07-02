@@ -64,8 +64,9 @@ where
         FAccum: FnMut(&A, &S) -> S + Send + Sync + 'static,
     {
         self.accum(init_state, move |a, prev| {
-            if cond(a, prev) {
-                accum(a, prev)
+            let next = accum(a, prev);
+            if cond(a, &next) {
+                next
             } else {
                 prev.clone()
             }
