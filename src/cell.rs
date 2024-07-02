@@ -56,8 +56,12 @@ where
     ///
     /// As each event is received, the accumulating function `accum` is called with the current state and the new event value.
     /// Next, the condition function `cond` is called with the result of accum function.
-    /// If the cond function returns true, the state is updated with the result of the accum function, else the state is updated with the previous state.
-    /// The accumulating function and condtion function may construct FRP logic or [`Cell::sample`], in which case it's equivalent to [`snapshot`][Stream::snapshot]ing the cell. In additon, the function must be referentially transparent.
+    /// If the cond function returns true, the state is updated with the result of the accum function,
+    /// else the state is updated with the previous state.
+    ///
+    /// The accumulating function and condtion function may construct FRP logic or [`Cell::sample`],
+    /// in which case it's equivalent to [`snapshot`][Stream::snapshot]ing the cell.
+    /// In additon, the function must be referentially transparent.
     ///
     /// ```
     /// let s: Stream<usize> = sodium_ctx.new_stream_sink().stream();
