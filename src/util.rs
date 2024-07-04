@@ -7,16 +7,14 @@ pub trait StreamSequenceVec<A>
 where
     A: Clone + Send + 'static,
 {
-    fn sequence(&self, sodium_ctx: &SodiumCtx) -> Stream<Vec<A>>;
+    fn sequence(&self, s_never: Stream<Vec<A>>) -> Stream<Vec<A>>;
 }
 
 impl<A> StreamSequenceVec<A> for Vec<Stream<A>>
 where
     A: Clone + Send + 'static,
 {
-    fn sequence(&self, sodium_ctx: &SodiumCtx) -> Stream<Vec<A>> {
-        let s_never: Stream<Vec<A>> = sodium_ctx.new_stream();
-
+    fn sequence(&self, s_never: Stream<Vec<A>>) -> Stream<Vec<A>> {
         self.iter()
             .map(|s_a| s_a.map(|a| vec![a.clone()]))
             .fold(s_never, |s_acc, s_b| {
@@ -34,7 +32,7 @@ where
     Key: Clone + Send + Hash + Eq + 'static + Sync,
     A: Clone + Send + 'static,
 {
-    fn sequence(&self, sodium_ctx: &SodiumCtx) -> Stream<HashMap<Key, A>>;
+    fn sequence(&self, s_never: Stream<HashMap<Key, A>>) -> Stream<HashMap<Key, A>>;
 }
 
 impl<Key, A> StreamSequenceHashMap<Key, A> for HashMap<Key, Stream<A>>
@@ -42,9 +40,7 @@ where
     Key: Clone + Send + Hash + Eq + 'static + Sync,
     A: Clone + Send + 'static,
 {
-    fn sequence(&self, sodium_ctx: &SodiumCtx) -> Stream<HashMap<Key, A>> {
-        let s_never: Stream<HashMap<Key, A>> = sodium_ctx.new_stream();
-
+    fn sequence(&self, s_never: Stream<HashMap<Key, A>>) -> Stream<HashMap<Key, A>> {
         self.iter()
             .map(|(k, s_a)| {
                 let k = k.clone();
@@ -94,7 +90,7 @@ mod test {
             ssink_d.stream(),
         ];
 
-        let s_vec_char = vec_s_char.sequence(&sodium_ctx);
+        let s_vec_char = vec_s_char.sequence(sodium_ctx.new_stream());
 
         let results = Arc::new(Mutex::new(vec![]));
         let l;
@@ -160,7 +156,7 @@ mod test {
         char_to_s_char.insert('c', ssink_c.stream());
         char_to_s_char.insert('d', ssink_d.stream());
 
-        let s_char_to_char = char_to_s_char.sequence(&sodium_ctx);
+        let s_char_to_char = char_to_s_char.sequence(sodium_ctx.new_stream());
 
         let results = Arc::new(Mutex::new(vec![]));
         let l;
@@ -218,16 +214,14 @@ pub trait CellSequenceVec<A>
 where
     A: Clone + Send + 'static,
 {
-    fn sequence(&self, sodium_ctx: &SodiumCtx) -> Cell<Vec<A>>;
+    fn sequence(&self, c_init: Cell<Vec<A>>) -> Cell<Vec<A>>;
 }
 
 impl<A> CellSequenceVec<A> for Vec<Cell<A>>
 where
     A: Clone + Send + 'static,
 {
-    fn sequence(&self, sodium_ctx: &SodiumCtx) -> Cell<Vec<A>> {
-        let c_init: Cell<Vec<A>> = sodium_ctx.new_cell(vec![]);
-
+    fn sequence(&self, c_init: Cell<Vec<A>>) -> Cell<Vec<A>> {
         self.iter()
             .map(|c_a| c_a.map(|a| vec![a.clone()]))
             .fold(c_init, |c_acc, c_b| {
@@ -245,7 +239,7 @@ where
     Key: Clone + Send + Hash + Eq + 'static + Sync,
     A: Clone + Send + 'static,
 {
-    fn sequence(&self, sodium_ctx: &SodiumCtx) -> Cell<HashMap<Key, A>>;
+    fn sequence(&self, c_init: Cell<HashMap<Key, A>>) -> Cell<HashMap<Key, A>>;
 }
 
 impl<Key, A> CellSequenceHashMap<Key, A> for HashMap<Key, Cell<A>>
@@ -253,9 +247,7 @@ where
     Key: Clone + Send + Hash + Eq + 'static + Sync,
     A: Clone + Send + 'static,
 {
-    fn sequence(&self, sodium_ctx: &SodiumCtx) -> Cell<HashMap<Key, A>> {
-        let c_init: Cell<HashMap<Key, A>> = sodium_ctx.new_cell(HashMap::new());
-
+    fn sequence(&self, c_init: Cell<HashMap<Key, A>>) -> Cell<HashMap<Key, A>> {
         self.iter()
             .map(|(k, c_a)| {
                 let k = k.clone();
