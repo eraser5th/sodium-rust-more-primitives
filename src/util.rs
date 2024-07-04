@@ -1,6 +1,7 @@
+use std::iter::Iterator;
 use std::{collections::HashMap, hash::Hash};
 
-use sodium_rust::{SodiumCtx, Stream};
+use sodium_rust::{Cell, SodiumCtx, Stream};
 
 pub trait StreamSequenceVec<A>
 where
@@ -210,5 +211,66 @@ mod test {
             ];
             assert_eq!(results, &expects)
         }
+    }
+}
+
+pub trait CellSequenceVec<A>
+where
+    A: Clone + Send + 'static,
+{
+    fn sequence(&self, sodium_ctx: &SodiumCtx) -> Cell<Vec<A>>;
+}
+
+impl<A> CellSequenceVec<A> for Vec<Cell<A>>
+where
+    A: Clone + Send + 'static,
+{
+    fn sequence(&self, sodium_ctx: &SodiumCtx) -> Cell<Vec<A>> {
+        let c_init: Cell<Vec<A>> = sodium_ctx.new_cell(vec![]);
+
+        self.iter()
+            .map(|c_a| c_a.map(|a| vec![a.clone()]))
+            .fold(c_init, |c_acc, c_b| {
+                c_acc.lift2(&c_b, |acc, b| {
+                    let mut next = acc.clone();
+                    next.extend(b.clone().into_iter());
+                    next
+                })
+            })
+    }
+}
+
+pub trait CellSequenceHashMap<Key, A>
+where
+    Key: Clone + Send + Hash + Eq + 'static + Sync,
+    A: Clone + Send + 'static,
+{
+    fn sequence(&self, sodium_ctx: &SodiumCtx) -> Cell<HashMap<Key, A>>;
+}
+
+impl<Key, A> CellSequenceHashMap<Key, A> for HashMap<Key, Cell<A>>
+where
+    Key: Clone + Send + Hash + Eq + 'static + Sync,
+    A: Clone + Send + 'static,
+{
+    fn sequence(&self, sodium_ctx: &SodiumCtx) -> Cell<HashMap<Key, A>> {
+        let c_init: Cell<HashMap<Key, A>> = sodium_ctx.new_cell(HashMap::new());
+
+        self.iter()
+            .map(|(k, c_a)| {
+                let k = k.clone();
+                c_a.map(move |a| {
+                    let mut set = HashMap::new();
+                    set.insert(k.clone(), a.clone());
+                    set
+                })
+            })
+            .fold(c_init, |c_acc, c_b| {
+                c_acc.lift2(&c_b, |acc, b| {
+                    let mut next = acc.clone();
+                    next.extend(b.clone().into_iter());
+                    next
+                })
+            })
     }
 }
