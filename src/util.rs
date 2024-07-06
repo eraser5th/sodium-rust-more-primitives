@@ -1,7 +1,7 @@
 use std::iter::Iterator;
 use std::{collections::HashMap, hash::Hash};
 
-use sodium_rust::{Cell, SodiumCtx, Stream};
+use sodium_rust::{Cell, Stream};
 
 pub trait StreamSequenceVec<A>
 where
