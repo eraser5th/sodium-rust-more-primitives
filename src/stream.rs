@@ -6,6 +6,8 @@ pub trait StreamWithMorePrimitives<A>
 where
     A: Clone + Send + 'static,
 {
+    fn map_unit(&self) -> Stream<()>;
+
     fn if_then_else<FN>(&self, cond: FN) -> (Stream<A>, Stream<A>)
     where
         FN: Fn(&A) -> bool + Clone + Send + Sync + 'static;
@@ -26,6 +28,10 @@ impl<A> StreamWithMorePrimitives<A> for Stream<A>
 where
     A: Clone + Send + 'static,
 {
+    fn map_unit(&self) -> Stream<()> {
+        self.map(|_| ())
+    }
+
     fn if_then_else<FN>(&self, cond: FN) -> (Stream<A>, Stream<A>)
     where
         FN: Fn(&A) -> bool + Send + Sync + 'static,
@@ -92,4 +98,3 @@ where
         })
     }
 }
-
