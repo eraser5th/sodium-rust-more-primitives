@@ -8,6 +8,8 @@ where
 {
     fn map_unit(&self) -> Stream<()>;
 
+    fn wrap_option(&self) -> Stream<Option<A>>;
+
     fn if_then_else<FN>(&self, cond: FN) -> (Stream<A>, Stream<A>)
     where
         FN: Fn(&A) -> bool + Clone + Send + Sync + 'static;
@@ -30,6 +32,10 @@ where
 {
     fn map_unit(&self) -> Stream<()> {
         self.map(|_| ())
+    }
+
+    fn wrap_option(&self) -> Stream<Option<A>> {
+        self.map(|a| Some(a.clone()))
     }
 
     fn if_then_else<FN>(&self, cond: FN) -> (Stream<A>, Stream<A>)
